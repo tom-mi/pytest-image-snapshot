@@ -61,7 +61,7 @@ def image_diff(img_1, img_2):
 
 @pytest.fixture
 def image_snapshot(request):
-    def _image_snapshot(img, img_path, threshold=None):
+    def _image_snapshot(img, img_path, threshold=None, includeAA=False):
         config = request.config
         update_snapshots = config.getoption("--image-snapshot-update")
         fail_if_missing = config.getoption("--image-snapshot-fail-if-missing")
@@ -73,7 +73,7 @@ def image_snapshot(request):
             img_1, img_2 = extend_to_match_size(img, src_image)
             diff = image_diff(img_1, img_2)
             if diff:
-                if threshold:
+                if threshold or includeAA:
                     try:
                         from pixelmatch.contrib.PIL import pixelmatch
                     except ModuleNotFoundError:
@@ -85,8 +85,10 @@ def image_snapshot(request):
 
                     if threshold is True:
                         threshold = 0.1
+                    if threshold is None:
+                        threshold = 0
                     mismatch = pixelmatch(
-                        img_1, img_2, threshold=threshold, fail_fast=True
+                        img_1, img_2, threshold=threshold, fail_fast=True, includeAA=includeAA,
                     )
                     if not mismatch:
                         return
